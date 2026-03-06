@@ -203,11 +203,10 @@ app.post("/transcribe", async (req, res) => {
 });
 
 /* =============================
-   AI POST GENERATION (CLAUDE 3 HAIKU)
+   AI CONTENT GENERATION (LLAMA)
 ============================= */
 
 app.post("/generate-post", async (req, res) => {
-
     try {
 
         const { prompt } = req.body;
@@ -215,21 +214,25 @@ app.post("/generate-post", async (req, res) => {
         console.log("Generating AI post for:", prompt);
 
         const command = new InvokeModelCommand({
-            modelId: "anthropic.claude-3-haiku-20240307-v1:0",
+            modelId: "meta.llama3-8b-instruct-v1:0",
             contentType: "application/json",
             accept: "application/json",
 
             body: JSON.stringify({
-                anthropic_version: "bedrock-2023-05-31",
-                max_tokens: 300,
-                temperature: 0.7,
+                prompt: `
+<|begin_of_text|>
+<|start_header_id|>system<|end_header_id|>
+You are a social media expert.
 
-                messages: [
-                    {
-                        role: "user",
-                        content: `Write a professional LinkedIn or Instagram post about: ${prompt}`
-                    }
-                ]
+Write a professional LinkedIn or Instagram post with emojis and hashtags.
+
+<|start_header_id|>user<|end_header_id|>
+${prompt}
+
+<|start_header_id|>assistant<|end_header_id|>
+`,
+                max_gen_len: 300,
+                temperature: 0.7
             })
         });
 
@@ -239,7 +242,7 @@ app.post("/generate-post", async (req, res) => {
             new TextDecoder().decode(response.body)
         );
 
-        const generatedText = responseBody.content[0].text;
+        const generatedText = responseBody.generation;
 
         res.json({
             post: generatedText
@@ -247,7 +250,7 @@ app.post("/generate-post", async (req, res) => {
 
     } catch (error) {
 
-        console.error("Bedrock error:", error);
+        console.error("Llama error:", error);
 
         res.status(500).json({
             error: "AI generation failed",
@@ -255,9 +258,64 @@ app.post("/generate-post", async (req, res) => {
         });
 
     }
-
 });
 
+/* =============================
+   VIRALITY SCORE ANALYSIS
+============================= */
+
+app.post("/virality-score", async (req, res) => {
+
+    try {
+
+        const { content } = req.body;
+
+        const command = new InvokeModelCommand({
+            modelId: "meta.llama3-8b-instruct-v1",
+            contentType: "application/json",
+            accept: "application/json",
+            body: JSON.stringify({
+                prompt: `
+Analyze this LinkedIn post and return virality score.
+
+Post:
+${content}
+
+Return JSON like:
+{
+ score: number,
+ engagement: number,
+ hashtags: number,
+ quality: number,
+ timing: number
+}
+        `,
+                max_gen_len: 200,
+                temperature: 0.5
+            })
+        });
+
+        const response = await bedrock.send(command);
+
+        const responseBody = JSON.parse(
+            new TextDecoder().decode(response.body)
+        );
+
+        res.json({
+            analysis: responseBody.generation
+        });
+
+    } catch (error) {
+
+        console.log(error);
+
+        res.status(500).json({
+            error: "Virality analysis failed"
+        });
+
+    }
+
+});
 /* =============================
    SERVER START
 ============================= */
@@ -278,4 +336,59 @@ process.on("uncaughtException", (err) => {
 
 process.on("unhandledRejection", (err) => {
     console.error("Unhandled Rejection:", err);
+});
+
+app.post("/best-time", async (req, res) => {
+
+    try {
+
+        const { post } = req.body;
+
+        const command = new InvokeModelCommand({
+            modelId: "meta.llama3-8b-instruct-v1:0",
+            contentType: "application/json",
+            accept: "application/json",
+
+            body: JSON.stringify({
+                prompt: `
+<|begin_of_text|>
+You are a social media expert.
+
+Analyze this post and suggest the best posting time.
+
+Return JSON format like:
+{
+ "instagram": "7 PM",
+ "linkedin": "8 PM",
+ "twitter": "6 PM"
+}
+
+Post:
+${post}
+`,
+                max_gen_len: 150,
+                temperature: 0.7
+            })
+        });
+
+        const response = await bedrock.send(command);
+
+        const responseBody = JSON.parse(
+            new TextDecoder().decode(response.body)
+        );
+
+        res.json({
+            suggestion: responseBody.generation
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+            error: "Scheduler AI failed"
+        });
+
+    }
+
 });

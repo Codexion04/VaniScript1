@@ -15,6 +15,7 @@ export function VoiceCommandCenter({
   const [prompt, setPrompt] = useState("");
   const [generatedPost, setGeneratedPost] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [viralityScore, setViralityScore] = useState("");
 
   /* =============================
      RECEIVE TRANSCRIPT FROM VOICE
@@ -51,11 +52,36 @@ export function VoiceCommandCenter({
       const data = await res.json();
 
       setGeneratedPost(data.post);
+      getViralityScore(data.post);
     } catch (error) {
       console.error("AI generation error:", error);
       alert("AI generation failed ❌");
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const getViralityScore = async (post: string) => {
+    try {
+
+      const res = await fetch("http://localhost:5000/virality-score", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          post: post,
+        }),
+      });
+
+      const data = await res.json();
+
+      console.log("Virality score:", data);
+
+      setViralityScore(data.score || data.analysis);
+
+    } catch (error) {
+      console.error("Virality error:", error);
     }
   };
 
@@ -148,12 +174,25 @@ export function VoiceCommandCenter({
         >
           <h4 className="font-semibold mb-4">Generated Post</h4>
 
+
+
           <Textarea
             value={generatedPost}
             onChange={(e) => setGeneratedPost(e.target.value)}
             className="min-h-[200px] mb-4"
           />
 
+          {/* 🔥 VIRALITY SCORE DISPLAY */}
+          {viralityScore && (
+            <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200">
+              <h4 className="font-semibold text-blue-700 mb-1">
+                Virality Score
+              </h4>
+              <p className="text-gray-700 text-sm">
+                {viralityScore}
+              </p>
+            </div>
+          )}
           <div className="flex gap-3 flex-wrap">
             <Button
               size="sm"

@@ -74,13 +74,12 @@ export function TimeSchedulerPage() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setSelectedDate(`Feb ${day}`)}
-                  className={`aspect-square rounded-xl flex flex-col items-center justify-center transition-all relative ${
-                    selectedDate === `Feb ${day}`
+                  className={`aspect-square rounded-xl flex flex-col items-center justify-center transition-all relative ${selectedDate === `Feb ${day}`
                       ? 'bg-[#2563EB] text-white shadow-lg shadow-blue-500/30'
                       : hasScheduled
-                      ? 'bg-green-100 dark:bg-green-900/30 text-gray-900 dark:text-white hover:bg-green-200 dark:hover:bg-green-900/50'
-                      : 'bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600'
-                  }`}
+                        ? 'bg-green-100 dark:bg-green-900/30 text-gray-900 dark:text-white hover:bg-green-200 dark:hover:bg-green-900/50'
+                        : 'bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600'
+                    }`}
                 >
                   <span className="text-lg font-medium">{day}</span>
                   {hasScheduled && (
@@ -148,7 +147,7 @@ export function TimeSchedulerPage() {
         className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700 p-6"
       >
         <h2 className="font-semibold text-gray-900 dark:text-white mb-6">Scheduled Posts</h2>
-        
+
         <div className="space-y-4">
           {scheduledPosts.map((post, index) => (
             <motion.div

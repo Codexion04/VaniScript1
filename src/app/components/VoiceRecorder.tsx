@@ -25,7 +25,9 @@ export default function VoiceRecorder({ onTranscript }: VoiceRecorderProps) {
             audioChunksRef.current = [];
 
             mediaRecorder.ondataavailable = (event) => {
-                audioChunksRef.current.push(event.data);
+                if (event.data.size > 0) {
+                    audioChunksRef.current.push(event.data);
+                }
             };
 
             mediaRecorder.onstop = async () => {
@@ -36,11 +38,9 @@ export default function VoiceRecorder({ onTranscript }: VoiceRecorderProps) {
                         type: "audio/webm",
                     });
 
-                    const file = new File(
-                        [audioBlob],
-                        `audio-${Date.now()}.webm`,
-                        { type: "audio/webm" }
-                    );
+                    const file = new File([audioBlob], `audio-${Date.now()}.webm`, {
+                        type: "audio/webm",
+                    });
 
                     const formData = new FormData();
                     formData.append("file", file);
@@ -55,49 +55,46 @@ export default function VoiceRecorder({ onTranscript }: VoiceRecorderProps) {
                     });
 
                     if (!uploadRes.ok) {
-                        const text = await uploadRes.text();
-                        throw new Error("Upload failed: " + text);
+                        throw new Error("Upload failed");
                     }
 
                     const uploadData = await uploadRes.json();
-                    console.log("Upload response:", uploadData);
 
                     /* =============================
                        TRANSCRIBE
                     ============================= */
 
-                    const transcribeRes = await fetch(
-                        "http://localhost:5000/transcribe",
-                        {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify({
-                                fileName: uploadData.fileName,
-                            }),
-                        }
-                    );
+                    const transcribeRes = await fetch("http://localhost:5000/transcribe", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            fileName: uploadData.fileName,
+                        }),
+                    });
 
                     if (!transcribeRes.ok) {
-                        const text = await transcribeRes.text();
-                        throw new Error("Transcribe failed: " + text);
+                        throw new Error("Transcribe failed");
                     }
 
                     const transcribeData = await transcribeRes.json();
-                    console.log("Transcribe response:", transcribeData);
 
                     /* =============================
                        FETCH TRANSCRIPT
                     ============================= */
 
                     if (transcribeData.transcriptUrl) {
-                        const transcriptRes = await fetch(transcribeData.transcriptUrl);
+                        let transcriptRes = await fetch(transcribeData.transcriptUrl);
 
-                        const rawText = await transcriptRes.text();
-                        const transcriptJson = JSON.parse(rawText);
+                        if (!transcriptRes.ok) {
+                            throw new Error("Transcript fetch failed");
+                        }
 
-                        const text = transcriptJson.results.transcripts[0].transcript;
+                        const transcriptJson = await transcriptRes.json();
+
+                        const text =
+                            transcriptJson?.results?.transcripts?.[0]?.transcript || "";
 
                         console.log("Transcript:", text);
 
@@ -113,7 +110,7 @@ export default function VoiceRecorder({ onTranscript }: VoiceRecorderProps) {
                 }
             };
 
-            mediaRecorder.start();
+            mediaRecorder.start(1000);
             setIsRecording(true);
         } catch (error) {
             alert("Microphone permission denied ❌");
