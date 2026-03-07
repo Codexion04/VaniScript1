@@ -123,13 +123,13 @@ export default function VoiceRecorder({ onTranscript }: VoiceRecorderProps) {
     };
 
     return (
-        <div className="p-6 bg-white rounded-2xl shadow-md space-y-4">
-            <h2 className="text-lg font-semibold">Voice to Text</h2>
+        <div className="p-6 bg-white dark:bg-gray-800/50 rounded-2xl shadow-md border border-gray-100 dark:border-gray-700 space-y-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Voice to Text</h2>
 
             <Button
                 onClick={isRecording ? stopRecording : startRecording}
                 disabled={isProcessing}
-                className={`w-full ${isRecording ? "bg-red-500 hover:bg-red-600" : ""
+                className={`w-full ${isRecording ? "bg-red-500 hover:bg-red-600 text-white" : "bg-[#2563EB] hover:bg-blue-700 text-white"
                     }`}
             >
                 {isRecording
@@ -140,9 +140,9 @@ export default function VoiceRecorder({ onTranscript }: VoiceRecorderProps) {
             </Button>
 
             {transcript && (
-                <div className="p-4 bg-gray-100 rounded-xl">
-                    <p className="text-sm font-medium">Transcript:</p>
-                    <p className="text-gray-700 mt-2">{transcript}</p>
+                <div className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                    <p className="text-sm font-bold text-gray-900 dark:text-white">Transcript:</p>
+                    <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm leading-relaxed">{transcript}</p>
                 </div>
             )}
         </div>

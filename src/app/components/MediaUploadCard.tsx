@@ -5,9 +5,10 @@ import { Button } from "./ui/button";
 
 interface MediaUploadCardProps {
   onFileUpload?: (file: File, uploadedUrl?: string) => void;
+  onShowPreview?: () => void;
 }
 
-export function MediaUploadCard({ onFileUpload }: MediaUploadCardProps) {
+export function MediaUploadCard({ onFileUpload, onShowPreview }: MediaUploadCardProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -34,10 +35,37 @@ export function MediaUploadCard({ onFileUpload }: MediaUploadCardProps) {
       }
 
       console.log("Upload response:", data);
-
       setUploadedFileName(data.fileName);
 
-      alert("File uploaded successfully to S3 ✅");
+      // 🔥 Clear old data and OPEN MODAL IMMEDIATELY for feedback
+      localStorage.removeItem("generatedPost");
+      localStorage.removeItem("viralityScore");
+      onShowPreview?.();
+
+      // 🔥 AUTO-GENERATE CONTENT FOR THE FILE (in background)
+      try {
+        const genRes = await fetch("http://localhost:5000/generate-post", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: `A professional update about the file: ${file.name}` }),
+        });
+        const genData = await genRes.json();
+        if (genData.post) {
+          localStorage.setItem("generatedPost", genData.post);
+          // Trigger virality score
+          fetch("http://localhost:5000/virality-score", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ post: genData.post }),
+          }).then(r => r.json()).then(vData => {
+            if (vData.score) localStorage.setItem("viralityScore", vData.score.toString());
+          });
+        }
+      } catch (genError) {
+        console.error("Auto-gen error:", genError);
+      }
+
+      alert("File analyzed and uploaded successfully! ✅");
 
       // Optional callback to parent
       onFileUpload?.(file, data.fileName);
@@ -171,6 +199,7 @@ export function MediaUploadCard({ onFileUpload }: MediaUploadCardProps) {
 
       {/* AI Button */}
       <Button
+        onClick={onShowPreview}
         className="w-full mt-4 h-11 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-xl shadow-lg shadow-purple-500/30"
         disabled={!uploadedFile || isUploading}
       >
