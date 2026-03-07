@@ -53,6 +53,8 @@ app.use(express.json());
 app.use((req, res, next) => {
   console.log(req.method + " " + req.url);
   next();
+  console.log(req.method + " " + req.url);
+  next();
 });
 
 /* =============================
@@ -60,6 +62,7 @@ app.use((req, res, next) => {
 ============================= */
 
 const upload = multer({
+  storage: multer.memoryStorage(),
   storage: multer.memoryStorage(),
 });
 
@@ -73,6 +76,11 @@ const s3 = new S3Client({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   },
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
 });
 
 const transcribeClient = new TranscribeClient({
@@ -81,9 +89,19 @@ const transcribeClient = new TranscribeClient({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   },
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
 });
 
 const bedrock = new BedrockRuntimeClient({
+  region: "us-east-1",
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
   region: "us-east-1",
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -111,6 +129,7 @@ const dynamoDB = DynamoDBDocumentClient.from(dynamoClient);
 
 app.get("/", (req, res) => {
   res.send("Backend working 🚀");
+  res.send("Backend working 🚀");
 });
 
 /* =============================
@@ -125,6 +144,8 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 
     const file = req.file;
     const fileName = Date.now() + "-" + file.originalname;
+    const file = req.file;
+    const fileName = Date.now() + "-" + file.originalname;
 
     const uploadParams = {
       Bucket: process.env.AWS_BUCKET_NAME,
@@ -132,7 +153,14 @@ app.post("/upload", upload.single("file"), async (req, res) => {
       Body: file.buffer,
       ContentType: file.mimetype,
     };
+    const uploadParams = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: fileName,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+    };
 
+    await s3.send(new PutObjectCommand(uploadParams));
     await s3.send(new PutObjectCommand(uploadParams));
 
     res.json({
@@ -147,9 +175,15 @@ app.post("/upload", upload.single("file"), async (req, res) => {
       details: error.message,
     });
   }
+    res.status(500).json({
+      error: "Upload failed",
+      details: error.message,
+    });
+  }
 });
 
 /* =============================
+   SPEECH TO TEXT
    SPEECH TO TEXT
 ============================= */
 
@@ -158,7 +192,17 @@ app.post("/transcribe", async (req, res) => {
     const { fileName } = req.body;
 
     const jobName = "transcribe-" + Date.now();
+    const jobName = "transcribe-" + Date.now();
 
+    const params = {
+      TranscriptionJobName: jobName,
+      LanguageCode: "en-IN",
+      MediaFormat: "webm",
+      Media: {
+        MediaFileUri: `s3://${process.env.AWS_BUCKET_NAME}/${fileName}`,
+      },
+      OutputBucketName: process.env.AWS_BUCKET_NAME,
+    };
     const params = {
       TranscriptionJobName: jobName,
       LanguageCode: "en-IN",
@@ -172,7 +216,12 @@ app.post("/transcribe", async (req, res) => {
     await transcribeClient.send(
       new StartTranscriptionJobCommand(params)
     );
+    await transcribeClient.send(
+      new StartTranscriptionJobCommand(params)
+    );
 
+    let transcriptUrl = null;
+    let status = "IN_PROGRESS";
     let transcriptUrl = null;
     let status = "IN_PROGRESS";
 
@@ -182,9 +231,21 @@ app.post("/transcribe", async (req, res) => {
           TranscriptionJobName: jobName,
         })
       );
+    while (status === "IN_PROGRESS") {
+      const data = await transcribeClient.send(
+        new GetTranscriptionJobCommand({
+          TranscriptionJobName: jobName,
+        })
+      );
 
       status = data.TranscriptionJob.TranscriptionJobStatus;
+      status = data.TranscriptionJob.TranscriptionJobStatus;
 
+      if (status === "COMPLETED") {
+        transcriptUrl =
+          data.TranscriptionJob.Transcript.TranscriptFileUri;
+        break;
+      }
       if (status === "COMPLETED") {
         transcriptUrl =
           data.TranscriptionJob.Transcript.TranscriptFileUri;
@@ -194,7 +255,12 @@ app.post("/transcribe", async (req, res) => {
       if (status === "FAILED") {
         throw new Error("Transcription job failed");
       }
+      if (status === "FAILED") {
+        throw new Error("Transcription job failed");
+      }
 
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+    }
       await new Promise((resolve) => setTimeout(resolve, 3000));
     }
 
@@ -210,9 +276,15 @@ app.post("/transcribe", async (req, res) => {
       details: error.message,
     });
   }
+    res.status(500).json({
+      error: "Transcription failed",
+      details: error.message,
+    });
+  }
 });
 
 /* =============================
+   AI POST GENERATION
    AI POST GENERATION
 ============================= */
 
@@ -400,6 +472,10 @@ app.post("/generate-hashtags", async (req, res) => {
       modelId: "meta.llama3-8b-instruct-v1:0",
       contentType: "application/json",
       accept: "application/json",
+    const command = new InvokeModelCommand({
+      modelId: "meta.llama3-8b-instruct-v1:0",
+      contentType: "application/json",
+      accept: "application/json",
 
       body: JSON.stringify({
         prompt: `
@@ -418,7 +494,11 @@ Return only hashtags.
     });
 
     const response = await bedrock.send(command);
+    const response = await bedrock.send(command);
 
+    const responseBody = JSON.parse(
+      new TextDecoder().decode(response.body)
+    );
     const responseBody = JSON.parse(
       new TextDecoder().decode(response.body)
     );
@@ -478,7 +558,11 @@ Return only improved post.
     });
 
     const response = await bedrock.send(command);
+    const response = await bedrock.send(command);
 
+    const responseBody = JSON.parse(
+      new TextDecoder().decode(response.body)
+    );
     const responseBody = JSON.parse(
       new TextDecoder().decode(response.body)
     );

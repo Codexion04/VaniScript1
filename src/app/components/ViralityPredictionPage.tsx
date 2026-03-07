@@ -148,27 +148,26 @@ export function ViralityPredictionPage() {
             <div className="flex items-center gap-3 mb-4">
 
               <div
-                className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${insight.color} flex items-center justify-center`}
+                className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${insight.color} flex items-center justify-center shadow-lg`}
               >
                 <insight.icon className="w-6 h-6 text-white" />
               </div>
 
             </div>
 
-            <p className="text-sm text-gray-600 mb-1">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
               {insight.label}
             </p>
 
             <div className="flex items-end gap-2">
 
-              <p className="text-3xl font-bold text-gray-900">
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">
                 {insight.value}
               </p>
 
               <span
-                className={`text-sm font-medium ${
-                  insight.positive ? "text-green-600" : "text-red-600"
-                }`}
+                className={`text-sm font-medium mb-1 ${insight.positive ? "text-green-600" : "text-red-600"
+                  }`}
               >
                 {insight.change}
               </span>
@@ -190,7 +189,6 @@ export function ViralityPredictionPage() {
           animate={{ opacity: 1, x: 0 }}
           className="bg-white rounded-3xl shadow-lg border p-6"
         >
-
           <div className="flex items-center gap-3 mb-6">
 
             <div className="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center">
@@ -239,7 +237,6 @@ export function ViralityPredictionPage() {
             </p>
 
           </div>
-
         </motion.div>
 
         {/* ENGAGEMENT CHART */}
@@ -249,7 +246,6 @@ export function ViralityPredictionPage() {
           animate={{ opacity: 1 }}
           className="lg:col-span-2 bg-white rounded-3xl shadow-lg border p-6"
         >
-
           <div className="flex items-center gap-3 mb-6">
 
             <TrendingUp className="w-5 h-5 text-blue-600" />
@@ -282,7 +278,6 @@ export function ViralityPredictionPage() {
             </LineChart>
 
           </ResponsiveContainer>
-
         </motion.div>
 
       </div>
@@ -320,7 +315,6 @@ export function ViralityPredictionPage() {
           </BarChart>
 
         </ResponsiveContainer>
-
       </motion.div>
 
     </div>

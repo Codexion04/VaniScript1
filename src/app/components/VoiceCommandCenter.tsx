@@ -1,6 +1,6 @@
 import { Upload, Sparkles, Wand2 } from "lucide-react";
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
 import VoiceRecorder from "./VoiceRecorder";
@@ -12,29 +12,49 @@ interface VoiceCommandCenterProps {
 export function VoiceCommandCenter({
   onCertificateUpload,
 }: VoiceCommandCenterProps) {
+
   const [prompt, setPrompt] = useState("");
   const [generatedPost, setGeneratedPost] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [viralityScore, setViralityScore] = useState("");
 
-  /* =============================
+  /* =====================================
+     RESTORE PREVIOUS DATA ON PAGE LOAD
+  ====================================== */
+
+  useEffect(() => {
+    const savedPost = localStorage.getItem("generatedPost");
+    const savedScore = localStorage.getItem("viralityScore");
+
+    if (savedPost) {
+      setGeneratedPost(savedPost);
+    }
+
+    if (savedScore) {
+      setViralityScore(savedScore);
+    }
+  }, []);
+
+  /* =====================================
      RECEIVE TRANSCRIPT FROM VOICE
-  ============================= */
+  ====================================== */
 
   const handleTranscript = (text: string) => {
     setPrompt((prev) => prev + " " + text);
   };
 
-  /* =============================
-     CALL BACKEND (BEDROCK)
-  ============================= */
+  /* =====================================
+     GENERATE AI POST
+  ====================================== */
 
   const handleGenerateContent = async () => {
+
     if (!prompt) return;
 
     setIsGenerating(true);
 
     try {
+
       const res = await fetch("http://localhost:5000/generate-post", {
         method: "POST",
         headers: {
@@ -52,7 +72,13 @@ export function VoiceCommandCenter({
       const data = await res.json();
 
       setGeneratedPost(data.post);
+
+      /* SAVE POST */
+      localStorage.setItem("generatedPost", data.post);
+
+      /* CALL VIRALITY API */
       getViralityScore(data.post);
+
     } catch (error) {
       console.error("AI generation error:", error);
       alert("AI generation failed ❌");
@@ -61,7 +87,12 @@ export function VoiceCommandCenter({
     }
   };
 
+  /* =====================================
+     GET VIRALITY SCORE FROM BACKEND
+  ====================================== */
+
   const getViralityScore = async (post: string) => {
+
     try {
 
       const res = await fetch("http://localhost:5000/virality-score", {
@@ -75,21 +106,61 @@ export function VoiceCommandCenter({
       });
 
       const data = await res.json();
+      
+      
 
       console.log("Virality score:", data);
 
-      setViralityScore(data.score || data.analysis);
+      const score = data.score || data.analysis || "70";
+
+      setViralityScore(score);
+      localStorage.setItem("viralityScore", score);
+localStorage.setItem("viralityReach", data.reach);
+localStorage.setItem("viralityEngagement", data.engagement);
+localStorage.setItem("viralityShares", data.shares);
+localStorage.setItem("viralityImpressions", data.impressions);
+
+      /* SAVE DATA FOR VIRALITY PAGE */
+
+const newResult = {
+  post: post,
+  score: data.score,
+  reach: data.reach,
+  engagement: data.engagement,
+  shares: data.shares,
+  impressions: data.impressions,
+  time: new Date().toISOString()
+};
+
+/* GET PREVIOUS HISTORY */
+
+const oldHistory = localStorage.getItem("viralityHistory");
+let history = [];
+
+if (oldHistory) {
+  history = JSON.parse(oldHistory);
+}
+
+/* ADD NEW RESULT */
+
+history.unshift(newResult);
+
+/* SAVE BACK */
+
+localStorage.setItem("viralityHistory", JSON.stringify(history));
 
     } catch (error) {
       console.error("Virality error:", error);
     }
+
   };
 
-  /* =============================
+  /* =====================================
      SIMPLE AI ENHANCEMENTS
-  ============================= */
+  ====================================== */
 
   const handleAIEnhance = (action: string) => {
+
     let enhanced = generatedPost;
 
     if (action === "shorten") {
@@ -101,6 +172,9 @@ export function VoiceCommandCenter({
     }
 
     setGeneratedPost(enhanced);
+
+    /* SAVE UPDATED POST */
+    localStorage.setItem("generatedPost", enhanced);
   };
 
   return (
@@ -109,9 +183,11 @@ export function VoiceCommandCenter({
       animate={{ opacity: 1, y: 0 }}
       className="bg-gradient-to-br from-white to-blue-50/50 dark:from-gray-800 dark:to-blue-900/20 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700 p-8"
     >
+
       {/* HEADER */}
 
       <div className="flex items-start gap-4 mb-6">
+
         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2563EB] to-[#7C3AED] flex items-center justify-center shadow-lg shadow-blue-500/30">
           <Sparkles className="w-6 h-6 text-white" />
         </div>
@@ -125,6 +201,7 @@ export function VoiceCommandCenter({
             Record voice → Transcribe → Generate AI Post
           </p>
         </div>
+
       </div>
 
       {/* VOICE RECORDER */}
@@ -142,9 +219,10 @@ export function VoiceCommandCenter({
         className="min-h-[120px] rounded-2xl border-gray-200 dark:border-gray-600 focus:border-[#2563EB] focus:ring-[#2563EB] resize-none"
       />
 
-      {/* ACTION BUTTONS */}
+      {/* BUTTONS */}
 
       <div className="flex gap-3 mt-4">
+
         <Button
           onClick={handleGenerateContent}
           disabled={!prompt || isGenerating}
@@ -162,38 +240,52 @@ export function VoiceCommandCenter({
           <Upload className="w-4 h-4 mr-2" />
           Upload Certificate
         </Button>
+
       </div>
 
       {/* GENERATED POST */}
 
       {generatedPost && (
+
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="mt-6 p-6 bg-green-50 dark:bg-green-900/10 rounded-3xl border"
         >
-          <h4 className="font-semibold mb-4">Generated Post</h4>
 
-
+          <h4 className="font-semibold mb-4">
+            Generated Post
+          </h4>
 
           <Textarea
             value={generatedPost}
-            onChange={(e) => setGeneratedPost(e.target.value)}
+            onChange={(e) => {
+              setGeneratedPost(e.target.value);
+              localStorage.setItem("generatedPost", e.target.value);
+            }}
             className="min-h-[200px] mb-4"
           />
 
-          {/* 🔥 VIRALITY SCORE DISPLAY */}
+          {/* VIRALITY SCORE */}
+
           {viralityScore && (
             <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200">
+
               <h4 className="font-semibold text-blue-700 mb-1">
                 Virality Score
               </h4>
+
               <p className="text-gray-700 text-sm">
                 {viralityScore}
               </p>
+
             </div>
           )}
+
+          {/* AI BUTTONS */}
+
           <div className="flex gap-3 flex-wrap">
+
             <Button
               size="sm"
               onClick={() => handleAIEnhance("shorten")}
@@ -211,9 +303,13 @@ export function VoiceCommandCenter({
               <Wand2 className="w-3.5 h-3.5 mr-2" />
               Add Emojis
             </Button>
+
           </div>
+
         </motion.div>
+
       )}
+
     </motion.div>
   );
 }
