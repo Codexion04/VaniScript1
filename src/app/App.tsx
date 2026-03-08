@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { AuthScreen } from './components/AuthScreen';
 import { Dashboard } from './components/Dashboard';
 import { LandingPage } from './components/LandingPage';
+import { signOut, getCurrentUser } from 'aws-amplify/auth';
 
 export default function App() {
   const [showLanding, setShowLanding] = useState(true);
@@ -16,8 +17,30 @@ export default function App() {
     localStorage.setItem("uiLanguage", uiLanguage);
   }, [uiLanguage]);
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
+  // Check if user is already authenticated on mount
+  useEffect(() => {
+    checkUser();
+  }, []);
+
+  async function checkUser() {
+    try {
+      await getCurrentUser();
+      setIsAuthenticated(true);
+      setShowLanding(false); // If already logged in, go straight to dashboard
+    } catch (err) {
+      setIsAuthenticated(false);
+    }
+  }
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      setIsAuthenticated(false);
+    } catch (error) {
+      console.error('Error signing out:', error);
+      // Still set to false to allow re-login attempt
+      setIsAuthenticated(false);
+    }
   };
 
   return (
