@@ -35,8 +35,8 @@ const awsConfig = {
   }
 };
 
-const s3 = new S3Client(awsConfig);
-const transcribeClient = new TranscribeClient(awsConfig);
+const s3 = new S3Client({ ...awsConfig, region: process.env.AWS_REGION || "ap-south-1" });
+const transcribeClient = new TranscribeClient({ ...awsConfig, region: process.env.AWS_REGION || "ap-south-1" });
 const bedrock = new BedrockRuntimeClient({ ...awsConfig, region: "us-east-1" });
 const dynamoClient = new DynamoDBClient({ ...awsConfig, region: "us-east-1" });
 const dynamoDB = DynamoDBDocumentClient.from(dynamoClient);
