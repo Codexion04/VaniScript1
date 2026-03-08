@@ -1,3 +1,4 @@
+import { API_URL } from "../../config";
 import { X, Sparkles, Copy, Download, Share2, Check, RefreshCw, AlertCircle, Edit3, Edit2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from './ui/button';
@@ -81,7 +82,7 @@ export function ContentPreviewModal({ isOpen, onClose, uploadedFile, uiLanguage 
     if (!caption || isLoading) return;
     setIsSaving(true);
     try {
-      const res = await fetch("http://localhost:5000/save-post", {
+      const res = await fetch(`${API_URL}/save-post`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

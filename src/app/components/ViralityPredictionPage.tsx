@@ -1,3 +1,4 @@
+import { API_URL } from "../../config";
 import { TrendingUp, Flame, Users, Heart, Share2, Eye, History, ArrowUpRight, Target, BarChart3 } from "lucide-react";
 import { motion } from "motion/react";
 import {
@@ -59,7 +60,7 @@ export function ViralityPredictionPage({ uiLanguage }: ViralityPredictionPagePro
     setIsAnalyzing(true);
 
     try {
-      const res = await fetch("http://localhost:5000/virality-score", {
+      const res = await fetch(`${API_URL}/virality-score`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ post: analyzeText }),

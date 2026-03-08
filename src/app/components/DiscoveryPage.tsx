@@ -1,3 +1,4 @@
+import { API_URL } from "../../config";
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { Search, Sparkles, TrendingUp, Lightbulb, ArrowRight, Share2 } from "lucide-react";
@@ -50,7 +51,7 @@ export function DiscoveryPage({ onUseIdea, uiLanguage, setUiLanguage }: Discover
         if (!niche) return;
         setLoading(prev => ({ ...prev, topics: true }));
         try {
-            const res = await fetch("http://localhost:5000/trending-topics", {
+            const res = await fetch(`${API_URL}/trending-topics`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ niche, language: uiLanguage }),
@@ -68,7 +69,7 @@ export function DiscoveryPage({ onUseIdea, uiLanguage, setUiLanguage }: Discover
         if (!niche) return;
         setLoading(prev => ({ ...prev, ideas: true }));
         try {
-            const res = await fetch("http://localhost:5000/content-ideas", {
+            const res = await fetch(`${API_URL}/content-ideas`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ niche, language: uiLanguage }),

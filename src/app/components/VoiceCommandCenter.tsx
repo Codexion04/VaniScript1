@@ -1,3 +1,4 @@
+import { API_URL } from "../../config";
 import { Upload, Sparkles, Wand2, CalendarCheck, Mic, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useState, useEffect, useRef } from "react";
@@ -139,7 +140,7 @@ export function VoiceCommandCenter({
     if (!hasScheduleIntent) return;
 
     try {
-      const res = await fetch("http://localhost:5000/parse-schedule", {
+      const res = await fetch(`${API_URL}/parse-schedule`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -267,7 +268,7 @@ export function VoiceCommandCenter({
 
     try {
 
-      const res = await fetch("http://localhost:5000/generate-post", {
+      const res = await fetch(`${API_URL}/generate-post`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -316,7 +317,7 @@ export function VoiceCommandCenter({
 
     try {
 
-      const res = await fetch("http://localhost:5000/virality-score", {
+      const res = await fetch(`${API_URL}/virality-score`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -371,7 +372,7 @@ export function VoiceCommandCenter({
         endpoint = "/generate-hashtags";
       }
 
-      const res = await fetch(`http://localhost:5000${endpoint}`, {
+      const res = await fetch(`${API_URL}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -404,7 +405,7 @@ export function VoiceCommandCenter({
 
     try {
 
-      const res = await fetch("http://localhost:5000/save-post", {
+      const res = await fetch(`${API_URL}/save-post`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -433,7 +434,7 @@ export function VoiceCommandCenter({
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch("http://localhost:5000/upload", {
+      const res = await fetch(`${API_URL}/upload`, {
         method: "POST",
         body: formData,
       });

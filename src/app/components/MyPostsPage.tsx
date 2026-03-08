@@ -1,3 +1,4 @@
+import { API_URL } from "../../config";
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import {
@@ -42,7 +43,7 @@ export function MyPostsPage({ onNavigate, uiLanguage }: MyPostsPageProps) {
     const fetchPosts = async () => {
         setLoading(true);
         try {
-            const res = await fetch("http://localhost:5000/my-posts");
+            const res = await fetch(`${API_URL}/my-posts`);
             const data = await res.json();
             setPosts(data.posts || []);
         } catch (error) {
@@ -54,7 +55,7 @@ export function MyPostsPage({ onNavigate, uiLanguage }: MyPostsPageProps) {
 
     const deletePost = async (userId: string) => {
         try {
-            const res = await fetch("http://localhost:5000/delete-post", {
+            const res = await fetch(`${API_URL}/delete-post`, {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userId }),

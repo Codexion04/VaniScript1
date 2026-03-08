@@ -1,3 +1,4 @@
+import { API_URL } from "../../config";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "./ui/button";
 import { translations } from "../translations";
@@ -188,14 +189,14 @@ export default function VoiceRecorder({ onTranscript, onLanguageDetected, langua
                     const formData = new FormData();
                     formData.append("file", file);
 
-                    const uploadRes = await fetch("http://localhost:5000/upload", {
+                    const uploadRes = await fetch(`${API_URL}/upload`, {
                         method: "POST",
                         body: formData,
                     });
                     if (!uploadRes.ok) throw new Error("Upload failed");
                     const uploadData = await uploadRes.json();
 
-                    const transcribeRes = await fetch("http://localhost:5000/transcribe", {
+                    const transcribeRes = await fetch(`${API_URL}/transcribe`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ fileName: uploadData.fileName, languageCode }),

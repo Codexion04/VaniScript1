@@ -1,3 +1,4 @@
+import { API_URL } from "../../config";
 import { Upload, Image, Video, FileText, Wand2 } from "lucide-react";
 import { motion } from "motion/react";
 import { useState, useRef } from "react";
@@ -26,7 +27,7 @@ export function MediaUploadCard({ onFileUpload, onShowPreview, uiLanguage }: Med
     try {
       setIsUploading(true);
 
-      const response = await fetch("http://localhost:5000/upload", {
+      const response = await fetch(`${API_URL}/upload`, {
         method: "POST",
         body: formData,
       });
@@ -47,7 +48,7 @@ export function MediaUploadCard({ onFileUpload, onShowPreview, uiLanguage }: Med
 
       // 🔥 AUTO-GENERATE CONTENT FOR THE FILE (in background)
       try {
-        const genRes = await fetch("http://localhost:5000/generate-post", {
+        const genRes = await fetch(`${API_URL}/generate-post`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -62,7 +63,7 @@ export function MediaUploadCard({ onFileUpload, onShowPreview, uiLanguage }: Med
         if (generatedContent) {
           localStorage.setItem("generatedPost", generatedContent);
           // Trigger virality score
-          fetch("http://localhost:5000/virality-score", {
+          fetch(`${API_URL}/virality-score`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ post: generatedContent }),
