@@ -1,22 +1,28 @@
-import { X, Sparkles, Copy, Download, Share2, Check, RefreshCw, AlertCircle, Edit3 } from 'lucide-react';
+import { X, Sparkles, Copy, Download, Share2, Check, RefreshCw, AlertCircle, Edit3, Edit2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from './ui/button';
-import { ImageWithFallback } from './figma/ImageWithFallback';
 import { useState, useEffect } from 'react';
+import { translations } from '../translations';
+import { MediaEditor } from './MediaEditor';
 
 interface ContentPreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   uploadedFile: File | null;
+  uiLanguage: string;
 }
 
-export function ContentPreviewModal({ isOpen, onClose, uploadedFile }: ContentPreviewModalProps) {
+export function ContentPreviewModal({ isOpen, onClose, uploadedFile, uiLanguage }: ContentPreviewModalProps) {
+  const t = translations[uiLanguage] || translations["English"];
   const [caption, setCaption] = useState("");
   const [score, setScore] = useState(85);
   const [isSaving, setIsSaving] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [errorCount, setErrorCount] = useState(0);
+  const [isEditingMedia, setIsEditingMedia] = useState(false);
+  const [mediaStyles, setMediaStyles] = useState("");
+  const [mediaAspectRatio, setMediaAspectRatio] = useState("aspect-square");
 
   // Poll for data until it's available
   useEffect(() => {
@@ -59,9 +65,9 @@ export function ContentPreviewModal({ isOpen, onClose, uploadedFile }: ContentPr
   }, [isOpen]);
 
   const viralityMetrics = [
-    { label: 'Engagement', value: score - 5, color: 'from-blue-500 to-blue-600' },
-    { label: 'Reach', value: score - 10, color: 'from-green-500 to-green-600' },
-    { label: 'Virality', value: score, color: 'from-purple-500 to-purple-600' },
+    { label: t.stEngagement, value: score - 5, color: 'from-blue-500 to-blue-600' },
+    { label: t.stReach, value: score - 10, color: 'from-green-500 to-green-600' },
+    { label: t.stVirality, value: score, color: 'from-purple-500 to-purple-600' },
   ];
 
   const handleCopy = () => {
@@ -86,7 +92,7 @@ export function ContentPreviewModal({ isOpen, onClose, uploadedFile }: ContentPr
       });
 
       if (res.ok) {
-        alert("Draft saved to History! 💾");
+        alert(t.stSaveDraftSuccess);
       }
     } catch (error) {
       console.error("Save error:", error);
@@ -97,7 +103,7 @@ export function ContentPreviewModal({ isOpen, onClose, uploadedFile }: ContentPr
 
   const handlePostNow = async () => {
     await handleSaveDraft();
-    alert("Post sent to scheduler! 🚀 Your content will be published at the optimal time.");
+    alert(t.stSentToScheduler);
     onClose();
   };
 
@@ -127,9 +133,9 @@ export function ContentPreviewModal({ isOpen, onClose, uploadedFile }: ContentPr
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
-                    AI Content Studio
+                    {t.stStudioTitle}
                   </h2>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">✨ Refining your viral masterpiece in real-time</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">✨ {t.stStudioSubtitle}</p>
                 </div>
               </div>
               <button
@@ -145,24 +151,35 @@ export function ContentPreviewModal({ isOpen, onClose, uploadedFile }: ContentPr
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                 {/* Left Side: Preview & Metrics */}
                 <div className="space-y-8">
-                  <div className="aspect-square rounded-[40px] overflow-hidden bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-2xl relative group">
+                  <div className={`${mediaAspectRatio} rounded-[40px] overflow-hidden bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-2xl relative group transition-all duration-500`}>
                     {uploadedFile ? (
                       <img
                         src={URL.createObjectURL(uploadedFile)}
                         alt="Content"
+                        style={{ filter: mediaStyles }}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                       />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
                         <AlertCircle className="w-12 h-12 mb-4 opacity-20" />
-                        <p className="text-sm font-medium opacity-50">No media preview available</p>
+                        <p className="text-sm font-medium opacity-50">{t.stNoMedia}</p>
                       </div>
                     )}
-                    <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/60 to-transparent">
+                    <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/60 to-transparent flex justify-between items-end">
                       <p className="text-white font-bold text-sm flex items-center gap-2">
                         <Check className="w-4 h-4 text-green-400" />
-                        Media Uploaded Successfully
+                        {t.stMediaSuccess}
                       </p>
+                      {uploadedFile && (
+                        <Button
+                          size="sm"
+                          onClick={() => setIsEditingMedia(true)}
+                          className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 text-white rounded-full px-4 h-9 font-bold text-xs"
+                        >
+                          <Edit2 className="w-3.5 h-3.5 mr-2" />
+                          {t.stEditMedia}
+                        </Button>
+                      )}
                     </div>
                   </div>
 
@@ -170,7 +187,7 @@ export function ContentPreviewModal({ isOpen, onClose, uploadedFile }: ContentPr
                     <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-[60px] rounded-full -mr-16 -mt-16" />
                     <h4 className="font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3 text-sm uppercase tracking-[0.2em]">
                       <span className="text-blue-500">◈</span>
-                      Virality Prediction
+                      {t.stViralityPredict}
                     </h4>
                     <div className="space-y-6">
                       {viralityMetrics.map((metric) => (
@@ -197,7 +214,7 @@ export function ContentPreviewModal({ isOpen, onClose, uploadedFile }: ContentPr
                 <div className="flex flex-col h-full space-y-6">
                   <div className="flex items-center justify-between shrink-0">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                      Generated Caption
+                      {t.stGenCaption}
                       {!isLoading && <Edit3 className="w-4 h-4 text-gray-400" />}
                     </h3>
                     <Button
@@ -208,7 +225,7 @@ export function ContentPreviewModal({ isOpen, onClose, uploadedFile }: ContentPr
                       onClick={handleCopy}
                     >
                       {isCopied ? <Check className="w-4 h-4 mr-2 text-green-500" /> : <Copy className="w-4 h-4 mr-2" />}
-                      {isCopied ? "Copied" : "Copy Post"}
+                      {isCopied ? t.stCopied : t.stCopyPost}
                     </Button>
                   </div>
 
@@ -217,7 +234,7 @@ export function ContentPreviewModal({ isOpen, onClose, uploadedFile }: ContentPr
                       value={caption}
                       onChange={(e) => setCaption(e.target.value)}
                       disabled={isLoading}
-                      placeholder="Waiting for AI to finish crafting..."
+                      placeholder={t.stWaitingAI}
                       className="w-full h-full p-8 bg-gray-50 dark:bg-gray-900/50 border-2 border-transparent focus:border-blue-500/50 rounded-[40px] text-base text-gray-800 dark:text-gray-200 leading-relaxed resize-none transition-all focus:bg-white dark:focus:bg-gray-900 shadow-inner custom-scrollbar"
                     />
 
@@ -228,7 +245,7 @@ export function ContentPreviewModal({ isOpen, onClose, uploadedFile }: ContentPr
                           <Sparkles className="w-5 h-5 text-purple-500 absolute -top-1 -right-1 animate-bounce" />
                         </div>
                         <p className="mt-6 text-sm font-black text-gray-600 dark:text-gray-300 tracking-[0.3em] uppercase animate-pulse">
-                          Crafting Content...
+                          {t.stCrafting}
                         </p>
                         {errorCount > 0 && <p className="mt-2 text-xs text-red-500 font-medium">Initial attempt failed, retrying...</p>}
                       </div>
@@ -238,7 +255,7 @@ export function ContentPreviewModal({ isOpen, onClose, uploadedFile }: ContentPr
                   <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-3xl p-5 border border-amber-500/20 shrink-0">
                     <p className="text-[12px] text-amber-900 dark:text-amber-200 leading-relaxed font-bold flex items-center gap-3">
                       <span className="text-xl">💡</span>
-                      <span>Best Posting Time: Today at 7:45 PM (Based on your network activity)</span>
+                      <span>{t.stBestTime}</span>
                     </p>
                   </div>
                 </div>
@@ -252,7 +269,7 @@ export function ContentPreviewModal({ isOpen, onClose, uploadedFile }: ContentPr
                 onClick={onClose}
                 className="w-full sm:w-auto px-10 h-14 rounded-3xl font-bold border-gray-200 dark:border-gray-800 text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-all"
               >
-                Edit Content
+                {t.stEditBtn}
               </Button>
 
               <div className="flex gap-4 w-full sm:w-auto">
@@ -263,7 +280,7 @@ export function ContentPreviewModal({ isOpen, onClose, uploadedFile }: ContentPr
                   className="flex-1 sm:flex-none px-8 h-14 rounded-3xl font-bold border-gray-200 dark:border-gray-800 text-sm"
                 >
                   <Download className="w-4 h-4 mr-2 text-blue-500" />
-                  {isSaving ? "Saving..." : "Save Draft"}
+                  {isSaving ? t.stSaving : t.stSaveDraft}
                 </Button>
                 <Button
                   onClick={handlePostNow}
@@ -271,10 +288,46 @@ export function ContentPreviewModal({ isOpen, onClose, uploadedFile }: ContentPr
                   className="flex-1 sm:flex-none px-10 h-14 rounded-3xl font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-[0_20px_40px_rgba(37,99,235,0.3)] hover:translate-y-[-2px] active:translate-y-[0px] transition-all text-sm"
                 >
                   <Share2 className="w-4 h-4 mr-2" />
-                  Publish Now
+                  {t.stPublishNow}
                 </Button>
               </div>
             </div>
+
+            {/* Media Editor Overlay */}
+            <AnimatePresence>
+              {isEditingMedia && uploadedFile && (
+                <div className="absolute inset-0 z-[110] bg-white dark:bg-gray-950 flex flex-col">
+                  {/* Editor Header */}
+                  <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                        <Edit2 className="w-5 h-5 text-white" />
+                      </div>
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t.stEditMedia}</h3>
+                    </div>
+                    <button
+                      onClick={() => setIsEditingMedia(false)}
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all"
+                    >
+                      <X className="w-6 h-6 text-gray-400" />
+                    </button>
+                  </div>
+
+                  <div className="flex-1 overflow-hidden">
+                    <MediaEditor
+                      file={uploadedFile}
+                      uiLanguage={uiLanguage}
+                      onApply={(style, ratio) => {
+                        setMediaStyles(style);
+                        setMediaAspectRatio(ratio);
+                        setIsEditingMedia(false);
+                      }}
+                      onCancel={() => setIsEditingMedia(false)}
+                    />
+                  </div>
+                </div>
+              )}
+            </AnimatePresence>
           </motion.div>
         </div>
       )}

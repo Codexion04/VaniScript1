@@ -1,14 +1,16 @@
-import { Home, Calendar, TrendingUp, Sparkles, LogOut, Search, ChevronLeft, ChevronRight, Menu } from "lucide-react";
+import { Home, Calendar, TrendingUp, Sparkles, LogOut, Search, ChevronLeft, ChevronRight, Settings, Image as ImageIcon } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { fetchUserAttributes, signOut } from "aws-amplify/auth";
+import { translations } from "../translations";
 
 interface SidebarProps {
-  activeView: "home" | "scheduler" | "virality" | "posts" | "discovery";
-  onNavigate: (view: "home" | "scheduler" | "virality" | "posts" | "discovery") => void;
+  activeView: "home" | "scheduler" | "virality" | "posts" | "discovery" | "settings";
+  onNavigate: (view: "home" | "scheduler" | "virality" | "posts" | "discovery" | "settings") => void;
   onLogout: () => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+  uiLanguage: string;
 }
 
 export function Sidebar({
@@ -17,17 +19,20 @@ export function Sidebar({
   onLogout,
   isCollapsed,
   onToggleCollapse,
+  uiLanguage,
 }: SidebarProps) {
+  const t = translations[uiLanguage] || translations["English"];
   const [userEmail, setUserEmail] = useState("");
   const [userName, setUserName] = useState("");
   const [userInitials, setUserInitials] = useState("");
 
   const navItems = [
-    { id: "home" as const, icon: Home, label: "Home" },
-    { id: "discovery" as const, icon: Search, label: "Discovery Hub" },
-    { id: "posts" as const, icon: Sparkles, label: "My Posts" },
-    { id: "scheduler" as const, icon: Calendar, label: "Time Scheduler" },
-    { id: "virality" as const, icon: TrendingUp, label: "Virality Prediction" },
+    { id: "home" as const, icon: Home, label: t.navHome },
+    { id: "discovery" as const, icon: Search, label: t.navDiscovery },
+    { id: "posts" as const, icon: Sparkles, label: t.navPosts },
+    { id: "scheduler" as const, icon: Calendar, label: t.navScheduler },
+    { id: "virality" as const, icon: TrendingUp, label: t.navVirality },
+    { id: "settings" as const, icon: Settings, label: t.navSettings },
   ];
 
   // ✅ Load User Attributes Properly
@@ -118,11 +123,11 @@ export function Sidebar({
         {/* Logout */}
         <button
           onClick={onLogout}
-          title={isCollapsed ? "Logout" : ""}
+          title={isCollapsed ? t.navLogout : ""}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:text-red-400 hover:bg-red-900/10 transition-all"
         >
           <LogOut className="w-5 h-5 flex-shrink-0" />
-          {!isCollapsed && <span className="hidden lg:block">Logout</span>}
+          {!isCollapsed && <span className="hidden lg:block">{t.navLogout}</span>}
         </button>
 
         {/* Collapse Toggle */}

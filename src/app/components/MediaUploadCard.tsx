@@ -2,13 +2,16 @@ import { Upload, Image, Video, FileText, Wand2 } from "lucide-react";
 import { motion } from "motion/react";
 import { useState, useRef } from "react";
 import { Button } from "./ui/button";
+import { translations } from "../translations";
 
 interface MediaUploadCardProps {
   onFileUpload?: (file: File, uploadedUrl?: string) => void;
   onShowPreview?: () => void;
+  uiLanguage: string;
 }
 
-export function MediaUploadCard({ onFileUpload, onShowPreview }: MediaUploadCardProps) {
+export function MediaUploadCard({ onFileUpload, onShowPreview, uiLanguage }: MediaUploadCardProps) {
+  const t = translations[uiLanguage] || translations["English"];
   const [isDragging, setIsDragging] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -47,16 +50,22 @@ export function MediaUploadCard({ onFileUpload, onShowPreview }: MediaUploadCard
         const genRes = await fetch("http://localhost:5000/generate-post", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: `A professional update about the file: ${file.name}` }),
+          body: JSON.stringify({
+            prompt: `A professional update about the file`,
+            media: file.name,
+            language: uiLanguage
+          }),
         });
         const genData = await genRes.json();
-        if (genData.post) {
-          localStorage.setItem("generatedPost", genData.post);
+        const generatedContent = genData.post || (genData.posts && Object.values(genData.posts)[0]);
+
+        if (generatedContent) {
+          localStorage.setItem("generatedPost", generatedContent);
           // Trigger virality score
           fetch("http://localhost:5000/virality-score", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ post: genData.post }),
+            body: JSON.stringify({ post: generatedContent }),
           }).then(r => r.json()).then(vData => {
             if (vData.score) localStorage.setItem("viralityScore", vData.score.toString());
           });
@@ -65,14 +74,14 @@ export function MediaUploadCard({ onFileUpload, onShowPreview }: MediaUploadCard
         console.error("Auto-gen error:", genError);
       }
 
-      alert("File analyzed and uploaded successfully! ✅");
+      alert(t.mediaFileAnalyzed);
 
       // Optional callback to parent
       onFileUpload?.(file, data.fileName);
 
     } catch (error) {
       console.error("Upload error:", error);
-      alert("Upload failed ❌ Check backend.");
+      alert(t.mediaCheckBackend);
     } finally {
       setIsUploading(false);
     }
@@ -113,10 +122,10 @@ export function MediaUploadCard({ onFileUpload, onShowPreview }: MediaUploadCard
         </div>
         <div>
           <h3 className="font-semibold text-gray-900 dark:text-white">
-            Media Upload
+            {t.mediaTitle}
           </h3>
           <p className="text-xs text-gray-600 dark:text-gray-400">
-            Enhance with AI
+            {t.mediaSubtitle}
           </p>
         </div>
       </div>
@@ -164,12 +173,12 @@ export function MediaUploadCard({ onFileUpload, onShowPreview }: MediaUploadCard
             </p>
 
             {isUploading && (
-              <p className="text-sm text-blue-500">Uploading to S3...</p>
+              <p className="text-sm text-blue-500">{t.mediaUploading}</p>
             )}
 
             {!isUploading && uploadedFileName && (
               <p className="text-sm text-green-500">
-                Uploaded Successfully ✅
+                {t.mediaUploadedSuccess}
               </p>
             )}
           </div>
@@ -181,10 +190,10 @@ export function MediaUploadCard({ onFileUpload, onShowPreview }: MediaUploadCard
 
             <div>
               <p className="font-medium text-gray-900 dark:text-white mb-1">
-                Drop files here or click to upload
+                {t.mediaDropFiles}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Video, Image, or PDF
+                {t.mediaFormats}
               </p>
             </div>
 
@@ -204,7 +213,7 @@ export function MediaUploadCard({ onFileUpload, onShowPreview }: MediaUploadCard
         disabled={!uploadedFile || isUploading}
       >
         <Wand2 className="w-4 h-4 mr-2" />
-        {isUploading ? "Uploading..." : "AI Enhance"}
+        {isUploading ? t.mediaUploading : t.mediaAiEnhance}
       </Button>
     </motion.div>
   );

@@ -2,22 +2,21 @@ import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import {
     Trash2,
-    Sparkles,
     Calendar,
-    Share2,
     Search,
     Copy,
     Check,
-    ExternalLink,
     Filter,
-    MoreVertical,
     Linkedin,
     Twitter,
     Instagram,
-    FileText,
-    Plus
+    Plus,
+    RefreshCcw,
+    Archive,
+    Share2
 } from "lucide-react";
 import { Button } from "./ui/button";
+import { translations } from "../translations";
 
 interface Post {
     userId: string;
@@ -28,10 +27,12 @@ interface Post {
 }
 
 interface MyPostsPageProps {
-    onNavigate: (view: "home" | "scheduler" | "virality" | "posts" | "discovery") => void;
+    onNavigate: (view: "home" | "scheduler" | "virality" | "posts" | "discovery" | "settings") => void;
+    uiLanguage: string;
 }
 
-export function MyPostsPage({ onNavigate }: MyPostsPageProps) {
+export function MyPostsPage({ onNavigate, uiLanguage }: MyPostsPageProps) {
+    const t = translations[uiLanguage] || translations["English"];
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
@@ -97,122 +98,77 @@ export function MyPostsPage({ onNavigate }: MyPostsPageProps) {
 
     return (
         <div className="space-y-8 pb-12">
-            {/* HEADER SECTION */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-                    <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
-                        Content Library
-                    </h1>
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">Manage and repurpose your high-performing AI content</p>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{t.libTitle}</h1>
+                    <p className="text-gray-600 dark:text-gray-400">{t.libSubtitle}</p>
                 </motion.div>
-
-                <div className="flex items-center gap-3">
+                <div className="flex gap-3">
                     <Button
                         variant="outline"
                         onClick={fetchPosts}
-                        className="rounded-2xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-2xl"
                     >
-                        Refresh
+                        <RefreshCcw className="w-4 h-4 mr-2" />
+                        {t.libRefresh}
                     </Button>
                     <Button
                         onClick={() => onNavigate('home')}
-                        className="rounded-2xl bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/20 gap-2"
+                        className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl shadow-lg shadow-blue-500/20"
                     >
-                        <Plus className="w-4 h-4" /> New Post
+                        <Plus className="w-4 h-4 mr-2" />
+                        {t.libNewPost}
                     </Button>
                 </div>
             </div>
 
-            {/* STATS SUMMARY */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                    { label: "Total Posts", value: posts.length, color: "blue" },
-                    { label: "LinkedIn", value: posts.filter(p => p.platform === 'LinkedIn').length, color: "indigo" },
-                    { label: "Twitter", value: posts.filter(p => p.platform === 'Twitter').length, color: "sky" },
-                    { label: "Saved Ideas", value: posts.length > 5 ? "85%" : "20%", color: "purple" }
-                ].map((stat, i) => (
-                    <motion.div
-                        key={stat.label}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.1 }}
-                        className="bg-white dark:bg-gray-800/50 p-4 rounded-3xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm shadow-sm"
-                    >
-                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{stat.label}</p>
-                        <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stat.value}</p>
-                    </motion.div>
-                ))}
+            {/* STATS OVERVIEW */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600">
+                        <Archive className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{t.libTotalPostsLabel}</p>
+                        <p className="text-2xl font-bold text-gray-900 dark:text-white">{posts.length}</p>
+                    </div>
+                </div>
             </div>
 
-            {/* FILTERS & SEARCH */}
-            <div className="flex flex-col md:flex-row gap-4 items-center">
-                <div className="relative flex-1 w-full">
+            {/* SEARCH AND FILTERS */}
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col md:flex-row gap-4">
+                <div className="relative flex-1">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
                         type="text"
-                        placeholder="Search keywords, titles, or tags..."
+                        placeholder={t.libSearchPlaceholder}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-12 pr-4 h-12 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white shadow-sm"
+                        className="w-full pl-12 pr-4 h-12 bg-gray-50 dark:bg-gray-700/50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
                     />
                 </div>
-                <div className="flex gap-2 w-full md:w-auto">
-                    {['All', 'LinkedIn', 'Twitter', 'Instagram'].map((plat) => (
-                        <button
-                            key={plat}
-                            onClick={() => setFilterPlatform(plat)}
-                            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${filterPlatform === plat
-                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
-                                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
-                                }`}
-                        >
-                            {plat}
-                        </button>
-                    ))}
+                <div className="flex gap-2">
+                    <Button variant="ghost" className="rounded-2xl h-12 px-6">
+                        <Filter className="w-4 h-4 mr-2" />
+                        {t.libFilter}
+                    </Button>
                 </div>
             </div>
 
-            {/* POSTS GRID */}
-            {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[1, 2, 3, 4, 5, 6].map(n => (
-                        <div key={n} className="h-64 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-3xl"></div>
-                    ))}
-                </div>
-            ) : filteredPosts.length === 0 ? (
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="text-center py-20 bg-white dark:bg-gray-800/30 rounded-[40px] border-2 border-dashed border-gray-200 dark:border-gray-700"
-                >
-                    <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                        <FileText className="w-10 h-10 text-blue-500" />
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">No content found</h3>
-                    <p className="text-gray-500 dark:text-gray-400 mt-2 max-w-sm mx-auto">
-                        {searchQuery ? "Try searching for different keywords or clear your filters." : "Start generating viral post ideas using the Voice Command Center!"}
-                    </p>
-                    {!searchQuery && (
-                        <Button
-                            onClick={() => onNavigate('home')}
-                            className="mt-8 rounded-2xl bg-blue-600 px-8 py-6 h-auto text-lg font-bold"
-                        >
-                            Generate My First Post
-                        </Button>
-                    )}
-                </motion.div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredPosts.map((post) => (
+            {/* CONTENT GRID */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {loading ? (
+                    [1, 2, 3].map((i) => (
+                        <div key={i} className="h-64 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-3xl" />
+                    ))
+                ) : filteredPosts.length > 0 ? (
+                    filteredPosts.map((post) => (
                         <motion.div
-                            key={post?.userId || Math.random()}
-                            initial={{ opacity: 0, scale: 0.9 }}
+                            key={post.userId}
+                            initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="group bg-white dark:bg-gray-800 p-6 rounded-[32px] shadow-sm hover:shadow-xl border border-gray-100 dark:border-gray-700 transition-all duration-300 relative overflow-hidden"
+                            className="bg-white dark:bg-gray-800 p-6 rounded-[32px] shadow-sm hover:shadow-xl border border-gray-100 dark:border-gray-700 transition-all duration-300 relative overflow-hidden group"
                         >
-                            {/* BACKGROUND ELEMENT */}
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />
-
                             <div className="flex justify-between items-start relative z-10">
                                 <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${post.platform === 'LinkedIn' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
                                     post.platform === 'Twitter' ? 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400' :
@@ -261,19 +217,37 @@ export function MyPostsPage({ onNavigate }: MyPostsPageProps) {
                                     className="flex-1 rounded-xl h-10 text-xs font-semibold border-gray-200 dark:border-gray-700"
                                     onClick={() => handleCopy(post.content, post.userId)}
                                 >
-                                    Copy All
+                                    {t.libCopyAll}
                                 </Button>
                                 <Button
                                     className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl h-10 text-xs font-semibold shadow-lg shadow-blue-500/20"
-                                    onClick={() => alert("Publishing feature coming soon! 🚀 This will connect to your social media APIs.")}
+                                    onClick={() => alert(t.libPublishFeature)}
                                 >
-                                    Publish Now
+                                    {t.stPublishNow}
                                 </Button>
                             </div>
                         </motion.div>
-                    ))}
-                </div>
-            )}
+                    ))
+                ) : (
+                    <div className="col-span-full py-20 text-center">
+                        <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-400">
+                            <Archive className="w-10 h-10" />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t.libNoContent}</h3>
+                        <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
+                            {searchQuery ? t.libTrySearching : t.libStartGenerating}
+                        </p>
+                        {!searchQuery && (
+                            <Button
+                                onClick={() => onNavigate('home')}
+                                className="mt-8 bg-blue-600 hover:bg-blue-700 text-white px-8 h-12 rounded-2xl"
+                            >
+                                {t.libGenerateFirst}
+                            </Button>
+                        )}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
