@@ -60,13 +60,21 @@ app.get("/", (req, res) => {
 
 // File Upload to S3
 app.post("/upload", upload.single("file"), async (req, res) => {
+  console.log("POST /upload request received");
   try {
     if (!req.file) {
+      console.log("No file in request");
       return res.status(400).json({ error: "No file uploaded" });
     }
 
     const file = req.file;
     const fileName = `${Date.now()}-${file.originalname}`;
+
+    console.log(`Uploading file: ${fileName}, size: ${file.size}, type: ${file.mimetype}`);
+
+    if (!process.env.AWS_BUCKET_NAME) {
+      throw new Error("AWS_BUCKET_NAME is not defined in environment variables");
+    }
 
     const uploadParams = {
       Bucket: process.env.AWS_BUCKET_NAME,
@@ -75,15 +83,23 @@ app.post("/upload", upload.single("file"), async (req, res) => {
       ContentType: file.mimetype,
     };
 
+    console.log(`Sending to S3 bucket: ${process.env.AWS_BUCKET_NAME}`);
     await s3.send(new PutObjectCommand(uploadParams));
+    console.log("S3 upload successful");
 
     res.json({
       message: "File uploaded successfully",
       fileName: fileName,
+      url: `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${fileName}`
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Upload failed", details: error.message });
+    console.error("Upload error details:", error);
+    res.status(500).json({
+      error: "Upload failed",
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      code: error.code || error.$metadata?.httpStatusCode
+    });
   }
 });
 
